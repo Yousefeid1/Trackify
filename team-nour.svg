@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="675" viewBox="0 0 900 675">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs>
+  <rect width="900" height="675" fill="url(#g)"/>
+  <circle cx="450" cy="250" r="112" fill="rgba(255,255,255,.92)"/>
+  <text x="450" y="287" text-anchor="middle" font-family="Inter, Arial" font-size="82" font-weight="800" fill="#b45309">NA</text>
+  <rect x="230" y="420" width="440" height="72" rx="36" fill="rgba(255,255,255,.9)"/>
+  <text x="450" y="466" text-anchor="middle" font-family="Inter, Arial" font-size="32" font-weight="800" fill="#102033">Nour Adel</text>
+</svg>
