@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Trackify — منصة تعليم CS مجانية بفيديوهات يوتيوب منظمة">
+  <title>Trackify — CS Learning Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Style.css">
+  <script src="New.js" defer></script>
+
+  <!--  EARLY DARK / LANG (قبل الرندر عشان نمنع الوميض)  -->
+  <script>
+    (function () {
+      if (localStorage.getItem('dark') === 'true')
+        document.documentElement.classList.add('dark-early');
+      if (localStorage.getItem('lang') === 'en') {
+        document.documentElement.lang = 'en';
+        document.documentElement.dir  = 'ltr';
+      }
+    })();
+  </script>
+  <style>
+    /* --- SCROLL PROGRESS BAR ---*/
+    .scroll-progress {
+      position: fixed; top: 0; left: 0; z-index: 200;
+      width: 0; height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--cyan), #22c55e);
+      transition: width 0.1s linear;}
+    /* --- AUTH SCREEN ---*/
+    .auth-screen {
+      min-height: 100vh;
+      display: grid; align-items: center;
+      padding: 64px 5%;
+      background: linear-gradient(220deg, rgb(24, 111, 219), rgb(15, 29, 223));
+      position: relative; z-index: 300;}
+
+  /* ----بيعمل قفل للموقع لحد ما يتم التسجيل ----*/
+    body:not(.auth-locked) .auth-screen { display: none; }
+    body.auth-locked .site-header,
+    body.auth-locked .mobile-nav-drawer,
+    body.auth-locked main,
+    body.auth-locked footer,
+    body.auth-locked #matrix-canvas { display: none; }
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px; align-items: right;
+      max-width: 960px; margin: auto;}
+    .auth-copy { color: white; }
+    .auth-copy .auth-brand {
+      display: inline-flex; align-items: center; gap: 10px;
+      text-decoration: none; margin-bottom: 28px;}
+    .auth-copy .auth-brand .logo-icon {
+      width: 42px; height: 42px; background: rgba(255, 255, 255, 0.2);
+      border-radius: 13px; display: grid; place-items: center;}
+    .auth-copy .auth-brand span {
+      font-family: 'Syne', sans-serif; font-size: 1.5rem;
+      font-weight: 800; color: white;}
+    .auth-eyebrow {
+      display: inline-block;
+      background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
+      padding: 5px 14px; border-radius: 20px; 
+      font-size: 13px; font-weight:800; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 18px; color: white;}
+    .auth-copy h2 {
+      font-family: 'Syne', sans-serif; font-size: 40px;
+      font-weight: 800; margin: 0 0 14px; line-height: 1.2; color: white;}
+    .auth-copy p { color: rgb(255, 255, 255); font-size:18px ; line-height: 1.8; margin-bottom: 24px; }
+    .auth-check-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+
+  /*---- النقط اللي جنب الكلام ----*/
+    .auth-check-list li {
+      position: relative; padding-right: 26px;
+      color: rgb(255, 255, 255); font-size: 15px;}
+    html[dir="ltr"] .auth-check-list li { padding-left: 26px; padding-right: 0; }
+    .auth-check-list li::before {
+      content: ''; position: absolute; right: 0; top: 7px;
+      width: 12px; height: 12px; border-radius: 50%; background: #22c55e;}
+    html[dir="ltr"] .auth-check-list li::before { left: 0; right: auto; }
+    .auth-card {
+      background: white; border-radius: 22px;
+      padding: 32px; display: grid; gap: 14px;
+      box-shadow: 0px 40px 50px rgb(0, 0, 0);}
+    body.dark .auth-card {
+      background: var(--card-bg); border: 1px solid var(--border);}
+    .auth-card h3 {
+      font-family: 'Syne', sans-serif; font-size: 26px;
+      font-weight: 800; margin: 0; color: var(--text-primary);}
+    .auth-card p { margin: 0; color: var(--text-secondary); font-size: 15px; }
+    .social-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .social-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; min-height: 44px;
+      border: 1.5px solid var(--border); border-radius: 11px;
+      background: white; color: var(--text-primary);
+      font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 14px;
+      cursor: pointer; transition: all 0.2s;}
+    body.dark .social-btn { background: var(--card-bg); }
+    .social-btn:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+    .social-btn img { width: 20px; height: 20px; }
+
+  /*--- الحاجز اللي بيفصل بين الخانات و الايكون جوجل و جيت هب ---*/
+    .auth-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--text-secondary); font-size: 15px;}
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 3px; background: var(--border);}
+    .auth-card label {
+      color: var(--text-primary); font-weight: 700; font-size: 16px; margin-bottom: -6px; }
+    .auth-card input {
+      width: 100%; height: 46px;
+      border: 1.5px solid var(--border); border-radius: 11px;
+      padding: 0 14px; background: #f8faff; color: var(--text-primary);
+      font-family: 'Cairo', sans-serif; font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;}
+    body.dark .auth-card input { background: var(--bg); }
+    .auth-card input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);}
+    .btn-auth-submit {
+      width: 100%; padding: 13px; border: none; border-radius: 11px;
+      background: var(--blue); color: white;
+      font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 16px;
+      cursor: pointer; transition: all 0.2s; margin-top: 4px;}
+    .btn-auth-submit:hover {
+      background: #1d4ed8; transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(37, 100, 235, 0.716);}
+    .auth-msg { min-height: 20px; margin: 0; color: #22c55e; font-weight: 700; font-size: 14px; text-align: center; }
+
+    /* --- HERO ---- */
+    .hero {
+      background: linear-gradient(220deg, rgb(50,20,182,0.92), rgba(0,17,255,0.92));
+      min-height: 420px; padding: 120px 5% 90px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center;
+      overflow: hidden; position: relative; z-index: 1;}
+    .hero-label {
+      background: rgba(136,165,226,0.25); color: #e0e6ed;
+      border: 2px solid rgba(147,197,253,0.3); padding: 6px 18px;
+      border-radius: 25px; font-size: 13px; font-weight: 800;
+      letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px;
+      display: inline-block;}
+    .hero h1 {
+      font-family: 'Syne', sans-serif; font-size: 60px;
+      color: white; font-weight: 800; line-height: 1.8; margin-bottom: 20px;
+      animation: fadeUp 0.7s ease both;}
+    .hero p {
+      color: #f0f4ff; font-size: clamp(15px,2vw,19px); margin-bottom: 36px;
+      animation: fadeUp 0.7s 0.2s ease both; max-width: 640px;}
+    .hero-metrics {
+      display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; 
+      margin-bottom: 40px; animation: fadeUp 0.7s 0.35s ease both;}
+    .hero-metrics span {
+      padding: 10px 18px; border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 999px; background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.9); font-size: 15px; font-weight: 700;}
+    .hero-metrics strong { color: white; }
+    .hero-btns {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      justify-content: center; animation: fadeUp 0.7s 0.5s ease both;}
+
+  /* بتشغل الانيميشن الللي في ال HERO */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }}
+
+    .btn-hero-primary {
+      background: white; color: var(--blue); border: 2px solid white;
+      padding: 13px 32px; border-radius: 10px;
+      font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 16px;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+      display: inline-flex; align-items: center;}
+    .btn-hero-primary:hover {
+      background: #e0eaff;
+      transform: translateY(-4px); box-shadow: 0 8px 24px rgba(255,255,255,0.3);}
+    .btn-hero-outline {
+      background: transparent; color: white;
+      border: 2px solid rgba(255,255,255,0.6);
+      padding: 13px 32px; border-radius: 10px;
+      font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 16px;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+      display: inline-flex; align-items: center;}
+    .btn-hero-outline:hover {
+      background: rgba(255,255,255,0.15); border-color: white;
+      transform: translateY(-4px);}
+
+    /* ---- STEPS ---- */
+    .steps {
+      background: var(--steps-bg); padding: 36px 8%;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+      border-bottom: 4px solid #0707e9;
+      position: relative; z-index: 1; transition: background 0.35s;}
+    .step-item { text-align: center; flex: 1; min-width: 150px; }
+    .step-num   { font-size: 28px; color: var(--blue); font-weight: 700; margin-bottom: 12px; }
+    .step-title { font-size: 19px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .step-subtitle { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+
+    /*---- SECTION GENERIC ----*/
+    .section { padding: 72px 6%; position: relative; z-index: 1; }
+    .section-band {
+      padding: 72px 6%; position: relative; z-index: 1;
+      background: radial-gradient(circle at top right, rgb(33, 102, 250), transparent 60%),
+      linear-gradient(180deg, var(--steps-bg), var(--bg));}
+    .section-head { max-width: 720px; margin-bottom: 36px; }
+    .section-head h2 {
+      font-family: 'Syne', sans-serif; font-size: clamp(28px,4vw,42px);
+      font-weight: 800; color: var(--text-primary); margin-bottom: 10px;}
+      .section-head p { color: rgb(11, 9, 9); font-size: 19px; line-height: 1.8; }
+    body.dark .section-head p { color: rgb(224, 214, 214); font-size: 18px; line-height: 1.8; }
+    .eyebrow {
+      display: inline-block; color: rgb(9, 8, 8);
+      font-size: 19px; font-weight: 900; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 10px;}
+    body.dark .eyebrow { color: #ffffff; font-size: 20px;}
+    /* ---- ABOUT — feature grid ----*/
+    .about-grid {  
+      display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center;}
+    .feature-grid {  
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;}
+    .feature-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px;
+      transition: box-shadow 0.25s, transform 0.25s, background 0.35s;}
+    .feature-card:hover {
+      transform: translateY(-5px); box-shadow: 0 8px 28px rgba(8, 38, 102, 0.995);}
+    body.dark .feature-card:hover {  transform: translateY(-5px); box-shadow: 0 8px 28px rgba(24, 173, 232, 0.995);}
+      .feature-icon {
+      display: inline-grid; width: 40px; height: 40px;
+      place-items: center; margin-bottom: 14px; border-radius: 11px;
+      background: rgba(37,99,235,0.08); color: var(--blue);
+      font-weight: 900; font-size: 13px;}
+    .feature-card h3 { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .feature-card p  { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin: 0; }
+
+    /* ══════════════════════════════════════════════
+       VIDEOS SECTION
+    ══════════════════════════════════════════════ */
+    .video-shell {
+      display: grid; grid-template-columns: minmax(0,1fr) 320px; /* انشاء عمودين */
+      gap: 20px; align-items: start;}
+    .video-frame {
+      position: relative; overflow: hidden; border-radius: 20px; aspect-ratio: 16/9;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.98);}
+    body.dark .video-frame { box-shadow: 0 0 40px rgba(11, 82, 234, 0.98);}
+    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    .video-sidebar {
+      background: var(--card-bg); border: 1px solid black;
+      border-radius: 18px; padding: 18px; transition: background 0.35s;}
+    body.dark .video-sidebar { border: 1px solid var(--border);}
+    .video-sidebar h3 { font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0 0 14px; }
+    .playlist-btn {
+      width: 100%; border: none; border-radius: 12px; padding: 12px;
+      background: transparent; color: var(--text-primary);
+      text-align: right; cursor: pointer; transition: background 0.2s; display: inline-block; margin-bottom: 6px;}
+    html[dir="ltr"] .playlist-btn { text-align: left; }
+    .playlist-btn:hover, .playlist-btn.active { background: rgba(3, 121, 232, 0.38); }
+    body.dark .playlist-btn:hover, .playlist-btn.active { background: rgba(255, 255, 255, 0.364); }
+    .playlist-btn strong { display: block; font-size: 13px; margin-bottom: 3px; }
+    .playlist-btn span   { color: var(--text-secondary); font-size: 12px; }
+    .playlist-btn.watched { background: rgba(34,197,94,0.08); }
+    .playlist-btn.watched::after {
+      content: attr(data-watched-label); display: inline-flex; margin-top: 6px;
+      padding: 3px 8px; border-radius: 999px; background: #22c55e;
+      color: white; font-size: 11px; font-weight: 800;}
+
+    /* ══════════════════════════════════════════════
+       DASHBOARD SECTION
+    ══════════════════════════════════════════════ */
+    .dashboard-section {
+      padding: 72px 6%; position: relative; overflow: hidden;}
+    body.dark .dashboard-section { background: #050b16; }
+    .dashboard-matrix {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      z-index: 0; opacity: 0; pointer-events: none; transition: opacity 0.35s;}
+    body.dark .dashboard-matrix { opacity: 0.4; }
+    .dashboard-inner { position: relative; z-index: 1; }
+    .dashboard-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;}
+    .dashboard-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 24px; padding: 26px;
+      box-shadow: 0 16px 40px rgba(37,99,235,0.1);
+      transition: background 0.35s;}
+    body.dark .dashboard-card {
+      background: rgba(13,27,47,0.88); backdrop-filter: blur(10px);}
+    .dash-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px;}
+    .dash-top span { display: block; color: var(--text-secondary); font-size: 13px; }
+    .dash-top strong { display: block; color: var(--blue); font-size: 2.2rem; font-weight: 800; }
+    .avatar-badge {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--blue); color: white;
+      display: grid; place-items: center;
+      font-weight: 900; font-size: 16px;}
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 18px;}
+    .stats-grid article {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;}
+    .stats-grid span { display: block; color: var(--text-secondary); font-size: 11px; }
+    .stats-grid strong { display: block; margin-top: 6px; font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+    .history-list { display: grid; gap: 8px; }
+    .history-item {
+      display: flex; justify-content: space-between; gap: 10px;
+      padding: 12px; border: 1px solid var(--border);
+      border-radius: 12px; background: var(--bg);}
+    .history-item b { font-size: 13px; color: var(--text-primary); }
+    .history-item span { font-size: 12px; color: var(--text-secondary); }
+
+    /* ══════════════════════════════════════════════
+       HERO MINI DASHBOARD (in hero panel)
+    ══════════════════════════════════════════════ */
+    .hero-panel-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;}
+    .mini-dashboard {
+      width: min(100%, 440px); padding: 22px;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 24px; box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+      transition: background 0.35s;}
+    .profile-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .profile-row p { margin: 0; color: var(--text-secondary); font-size: 13px; }
+    .profile-row h2 { margin: 2px 0; font-size: 1.4rem; color: var(--text-primary); }
+    .profile-row span { color: var(--text-secondary); font-size: 12px; }
+    .profile-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--blue); color: white; display: grid; place-items: center;
+      font-weight: 900; font-size: 20px; flex-shrink: 0;
+      border: 3px solid rgba(37,99,235,0.2);}
+    .progress-card-mini {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+      margin-bottom: 14px; padding: 16px; border-radius: 14px; background: var(--bg);
+      border: 1px solid var(--border);}
+    .progress-card-mini span  { color: var(--text-secondary); font-size: 12px; }
+    .progress-card-mini strong { font-size: 14px; color: var(--text-primary); font-weight: 800; }
+    .progress-card-mini b { color: var(--blue); font-size: 1.6rem; }
+    .progress-card-mini .progress-line { grid-column: 1/-1; }
+    .next-lesson-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px; border: 1px solid var(--border); border-radius: 14px;}
+    .play-dot {
+      width: 44px; height: 44px; flex-shrink: 0; border: none; border-radius: 50%;
+      background: #22c55e; cursor: pointer; position: relative;}
+    .play-dot::after {
+      content: ''; position: absolute; top: 14px; left: 17px;
+      border-top: 8px solid transparent; border-bottom: 8px solid transparent;
+      border-left: 12px solid white;}
+    .next-lesson-card strong { display: block; font-size: 13px; color: var(--text-primary); }
+    .next-lesson-card span   { font-size: 12px; color: var(--text-secondary); }
+
+    /* ══════════════════════════════════════════════
+       TEAM SECTION
+    ══════════════════════════════════════════════ */
+    .team-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;}
+    .team-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden;
+      transition: box-shadow 0.25s, transform 0.25s, background 0.35s;}
+    .team-card:hover {
+      transform: translateY(-5px); box-shadow: 0 12px 32px rgba(37,99,235,0.15);}
+    body.dark .team-card:hover { box-shadow: 0 12px 32px rgba(37,99,235,0.3); }
+    .team-photo {
+      display: block; width: 100%; aspect-ratio: 4/3;
+      object-fit: cover; object-position: center top; background: var(--bg);}
+    .team-content { padding: 20px; }
+    .team-role {
+      display: inline-flex; margin-bottom: 8px;
+      padding: 5px 12px; border-radius: 999px;
+      background: rgba(37,99,235,0.08); color: var(--blue);
+      font-size: 11px; font-weight: 900;}
+    .team-card h3 { font-size: 16px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .team-card > .team-content > p { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    .team-card ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
+    .team-card li {
+      position: relative; padding-right: 20px;
+      color: var(--text-secondary); font-size: 12px;}
+    html[dir="ltr"] .team-card li { padding-left: 20px; padding-right: 0; }
+    .team-card li::before {
+      content: ''; position: absolute; right: 0; top: 6px;
+      width: 8px; height: 8px; border-radius: 50%; background: #22c55e;}
+    html[dir="ltr"] .team-card li::before { left: 0; right: auto; }
+
+    /* ══════════════════════════════════════════════
+       CONTACT SECTION
+    ══════════════════════════════════════════════ */
+    .contact-grid {
+      display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 48px; align-items: start;}
+    .contact-form {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 22px; padding: 28px; display: grid; gap: 16px;
+      box-shadow: 0 12px 32px rgba(37,99,235,0.08);
+      transition: background 0.35s;}
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-group { display: grid; gap: 8px; }
+    .field-group label { color: var(--text-primary); font-weight: 800; font-size: 14px; }
+    .field-group input,
+    .field-group textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 11px;
+      padding: 12px 14px; background: var(--bg); color: var(--text-primary);
+      font-family: 'Cairo', sans-serif; font-size: 14px; outline: none; resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;}
+    .field-group input:focus,
+    .field-group textarea:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 4px rgba(37,99,235,0.1);}
+    .btn-contact-submit {
+      width: 100%; padding: 13px; border: none; border-radius: 11px;
+      background: var(--blue); color: white;
+      font-family: 'Cairo', sans-serif; font-weight: 800; font-size: 16px;
+      cursor: pointer; transition: all 0.2s;}
+    .btn-contact-submit:hover {
+      background: #1d4ed8; transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37,99,235,0.35);}
+    .form-msg { min-height: 20px; margin: 0; color: #22c55e; font-weight: 700; font-size: 14px; }
+    .form-msg.error { color: #ef4444; }
+
+    /* ══════════════════════════════════════════════
+       REVEAL ANIMATION
+    ══════════════════════════════════════════════ */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s ease, transform 0.55s ease;}
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ══════════════════════════════════════════════
+       MOBILE NAV DRAWER
+    ══════════════════════════════════════════════ */
+    .mobile-nav-drawer {
+      position: fixed; inset: 70px 0 auto; z-index: 140;
+      display: none; flex-direction: column; gap: 4px;
+      padding: 14px; border-bottom: 1px solid var(--border);
+      background: var(--nav-bg); box-shadow: 0 8px 24px rgba(0,0,0,0.1);}
+    .mobile-nav-drawer.open { display: flex; }
+    .mobile-nav-drawer a {
+      padding: 13px 14px; border-radius: 11px;
+      color: var(--nav-link); font-weight: 700; font-size: 15px; text-decoration: none;}
+    .mobile-nav-drawer a:hover { background: var(--bg); color: var(--blue); }
+    .hamburger-btn {
+      display: none; width: 40px; height: 40px; border-radius: 11px;
+      border: 1.5px solid var(--border); background: transparent;
+      cursor: pointer; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px;}
+    .hamburger-btn span {
+      display: block; width: 18px; height: 2px; border-radius: 2px;
+      background: var(--text-primary); transition: transform 0.2s, opacity 0.2s;}
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════ */
+    @media (max-width: 980px) {
+      .desktop-nav-links,
+      .btn-outline,
+      .btn-primary-nav { display: none !important; }
+      .hamburger-btn { display: flex; }
+      .team-grid { grid-template-columns: repeat(2,1fr); }}
+    @media (max-width: 640px) {
+      .hero { padding: 100px 5% 70px; }
+      .steps { padding: 28px 5%; }
+      .section, .section-band, .dashboard-section { padding: 56px 5%; }
+      .feature-grid, .stats-grid, .form-row { grid-template-columns: 1fr; }
+      .team-grid { grid-template-columns: 1fr; }
+      .auth-grid { grid-template-columns: 1fr; }
+      .auth-copy { display: none; }}
+    
+  </style>
+</head>
+<body class="auth-locked">
+
+  <!-- SCROLL PROGRESS -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- MATRIX CANVAS (للـ dark mode) -->
+  <canvas id="matrix-canvas"></canvas>
+
+  <!-- ══════════════════════════════════════════════
+       AUTH SCREEN
+  ══════════════════════════════════════════════ -->
+<section class="auth-screen" id="authScreen" aria-label="Login screen">
+  <div class="auth-top-bar">
+    <div class="auth-tip-wrap">
+      <button class="auth-icon-btn" id="auth-lang-btn">EN</button>
+      <span class="auth-tip-msg" id="auth-lang-tip">Switch to English</span>
+    </div>
+    <div class="auth-tip-wrap">
+      <button class="auth-icon-btn" id="auth-dark-btn">🌙</button>
+      <span class="auth-tip-msg" id="auth-dark-tip">الوضع الليلي</span>
+    </div>
+  </div>
+    <div class="auth-grid">
+      <div class="auth-copy reveal visible">
+        <a class="auth-brand" href="#home">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="3 17 7 9 11 13 15 7 19 17"
+                stroke="white" stroke-width="2.5" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span>Trackify</span>
+        </a>
+        <span class="auth-eyebrow" data-ar="الدخول للحساب" data-en="Account access">الدخول للحساب</span>
+        <h2 data-ar="كمل رحلتك التعليمية." data-en="Continue your learning journey.">كمل رحلتك التعليمية.</h2>
+        <p data-ar="سجل الدخول وTrackify هيحفظ التراكات، الفيديوهات، والتقدم على الجهاز ده."
+           data-en="Log in and Trackify will save your tracks, watched videos, and progress on this device.">
+          سجل الدخول وTrackify هيحفظ التراكات، الفيديوهات، والتقدم على الجهاز ده.
+        </p>
+        <ul class="auth-check-list">
+          <li data-ar="حفظ الدروس المتشاهدة تلقائياً" data-en="Save watched lessons automatically">حفظ الدروس المتشاهدة تلقائياً</li>
+          <li data-ar="تحديث تقدم الداشبورد فوراً"    data-en="Update dashboard progress instantly">تحديث تقدم الداشبورد فوراً</li>
+          <li data-ar="الرجوع لآخر تراك وفيديو"       data-en="Return to your latest track and video">الرجوع لآخر تراك وفيديو</li>
+        </ul>
+      </div>
+
+      <form class="auth-card reveal visible" id="authForm">
+        <h3 data-ar="أهلاً بعودتك" data-en="Welcome back">أهلاً بعودتك</h3>
+        <p data-ar="استخدم أي بيانات صحيحة لحساب الديمو." data-en="Use any valid details for this local demo account.">استخدم أي بيانات صحيحة لحساب الديمو.</p>
+
+        <div class="social-row">
+          <button type="button" class="social-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            <span data-ar="جوجل" data-en="Google">جوجل</span>
+          </button>
+          <button type="button" class="social-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span data-ar="جيت هب" data-en="GitHub">جيت هب</span>
+          </button>
+        </div>
+
+        <div class="auth-divider"><span data-ar="أو استخدم البريد" data-en="or use email">أو استخدم البريد</span></div>
+
+        <label for="authName" data-ar="الاسم" data-en="Name">الاسم</label>
+        <input id="authName" name="name" type="text" placeholder="Ahmed Hassan" required>
+
+        <label for="authEmail" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+        <input id="authEmail" name="email" type="email" placeholder="you@example.com" required>
+
+        <label for="authPassword" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+        <input id="authPassword" name="password" type="password" placeholder="اكتب كلمة المرور" minlength="6" required>
+
+        <button class="btn-auth-submit" type="submit" id="authButton" data-ar="تسجيل الدخول" data-en="Log In">تسجيل الدخول</button>
+        <p class="auth-msg" id="authMessage" role="status"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       NAV
+  ══════════════════════════════════════════════ -->
+  <nav>
+    <a href="#home" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="3 17 7 9 11 13 15 7 19 17"
+            stroke="white" stroke-width="2.5" fill="none"
+            stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="logo-text">Trackify</span>
+    </a>
+
+    <ul class="nav-links desktop-nav-links">
+      <li><a href="#home"      data-ar="الرئيسية"  data-en="Home">الرئيسية</a></li>
+      <li><a href="#about"     data-ar="عن الموقع" data-en="About">عن الموقع</a></li>
+      <li><a href="#tracks"    data-ar="التراكات"  data-en="Tracks">التراكات</a></li>
+      <li><a href="#videos"    data-ar="الفيديوهات" data-en="Videos">الفيديوهات</a></li>
+      <li><a href="#dashboard" data-ar="الداشبورد" data-en="Dashboard">الداشبورد</a></li>
+      <li><a href="#team"      data-ar="الفريق"    data-en="Team">الفريق</a></li>
+      <li><a href="#contact"   data-ar="تواصل"     data-en="Contact">تواصل</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <div class="tooltip">
+        <button class="icon-btn" id="lang-btn">
+          <span class="icon-inner lang-btn-text" id="lang-label">EN</span>
+        </button>
+        <span class="msg" id="lang-tip">Switch to English</span>
+      </div>
+      <div class="tooltip">
+        <button class="icon-btn" id="dark-btn">
+          <span class="icon-inner" id="dark-icon">🌙</span>
+        </button>
+        <span class="msg" id="dark-tip">الوضع الليلي</span>
+      </div>
+      <button class="btn-outline"     id="logoutButton" data-ar="تسجيل الخروج" data-en="Log Out">تسجيل الخروج</button>
+      <button class="btn-primary-nav" onclick="window.location.href='#tracks'" data-ar="ابدأ الآن" data-en="Start Now">ابدأ الآن</button>
+      <button class="hamburger-btn" id="menuToggle" aria-expanded="false" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE DRAWER -->
+  <div class="mobile-nav-drawer" id="mobileNav">
+    <a href="#home"      data-ar="الرئيسية"  data-en="Home">الرئيسية</a>
+    <a href="#about"     data-ar="عن الموقع" data-en="About">عن الموقع</a>
+    <a href="#tracks"    data-ar="التراكات"  data-en="Tracks">التراكات</a>
+    <a href="#videos"    data-ar="الفيديوهات" data-en="Videos">الفيديوهات</a>
+    <a href="#dashboard" data-ar="الداشبورد" data-en="Dashboard">الداشبورد</a>
+    <a href="#team"      data-ar="الفريق"    data-en="Team">الفريق</a>
+    <a href="#contact"   data-ar="تواصل"     data-en="Contact">تواصل</a>
+  </div>
+
+  <main>
+
+    <!-- ══════════════════════════════════════════
+         HERO
+    ══════════════════════════════════════════ -->
+    <section class="hero" id="home">
+      <span class="hero-label">CS Learning Platform</span>
+      <h1 data-ar="تابع تعلمك في مكان واحد." data-en="Track your learning in one place.">تابع تعلمك في مكان واحد.</h1>
+      <p data-ar="Trackify بينظم دروس يوتيوب المختارة في مسارات واضحة، ويساعدك تكمل من مكان ما وقفت وتشوف تقدمك اليومي بسهولة."
+         data-en="Trackify organizes curated YouTube lessons into focused tracks, helps you continue from where you stopped, and makes your daily progress easy to understand.">
+        Trackify بينظم دروس يوتيوب المختارة في مسارات واضحة، ويساعدك تكمل من مكان ما وقفت وتشوف تقدمك اليومي بسهولة.
+      </p>
+      <div class="hero-metrics">
+        <span><strong>24+</strong> <span data-ar="درس يوتيوب" data-en="YouTube lessons">درس يوتيوب</span></span>
+        <span><strong>4</strong>   <span data-ar="مسارات مهنية" data-en="career tracks">مسارات مهنية</span></span>
+        <span><strong>100%</strong> <span data-ar="مجاني" data-en="free">مجاني</span></span>
+      </div>
+      <div class="hero-btns">
+        <a class="btn-hero-primary" href="#tracks" data-ar="استكشف المسارات" data-en="Explore Tracks">استكشف المسارات</a>
+        <a class="btn-hero-outline" href="#videos" data-ar="شاهد الدروس"     data-en="Watch Lessons">شاهد الدروس</a>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         STEPS
+    ══════════════════════════════════════════ -->
+    <section class="steps" id="how">
+      <div class="step-item">
+        <div class="step-num">1.</div>
+        <div class="step-title"    data-ar="اختار تراكك"    data-en="Pick Your Track">اختار تراكك</div>
+        <div class="step-subtitle">Web Dev, AI, Security…</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2.</div>
+        <div class="step-title"    data-ar="شوف الفيديوهات"     data-en="Watch Videos">شوف الفيديوهات</div>
+        <div class="step-subtitle" data-ar="يوتيوب مدمج مباشرة" data-en="YouTube Embedded">يوتيوب مدمج مباشرة</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3.</div>
+        <div class="step-title"    data-ar="علّم اللي خلصته" data-en="Mark Complete">علّم اللي خلصته</div>
+        <div class="step-subtitle" data-ar="تابع مستواك"     data-en="Track Your Level">تابع مستواك</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4.</div>
+        <div class="step-title"    data-ar="كمّل المشوار" data-en="Keep Going">كمّل المشوار</div>
+        <div class="step-subtitle" data-ar="100% مجاني"   data-en="100% Free">%100 مجاني</div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         ABOUT
+    ══════════════════════════════════════════ -->
+    <section class="section" id="about">
+      <div class="about-grid">
+        <div class="section-copy reveal">
+          <span class="eyebrow" data-ar="عن Trackify" data-en="About Trackify">عن Trackify</span>
+          <h2 data-ar="طريقة أنضف للتعلم من يوتيوب." data-en="A cleaner way to learn from YouTube.">طريقة أنضف للتعلم من يوتيوب.</h2>
+          <p data-ar="بدل ما تحفظ فيديوهات عشوائية وتنسى وصلت لفين، Trackify بيجمع الدروس في مسارات واضحة فيها تقدم ومدة ووسوم ومشغل فيديو مركّز."
+             data-en="Instead of saving random videos and losing your place, Trackify groups lessons into clear roadmaps with progress, durations, tags, and a focused video player.">
+            بدل ما تحفظ فيديوهات عشوائية وتنسى وصلت لفين، Trackify بيجمع الدروس في مسارات واضحة فيها تقدم ومدة ووسوم ومشغل فيديو مركّز.
+          </p>
+        </div>
+        <div class="feature-grid reveal">
+          <article class="feature-card">
+            <span class="feature-icon">01</span>
+            <h3 data-ar="مسارات منظمة"   data-en="Structured Roadmaps">مسارات منظمة</h3>
+            <p  data-ar="تابع مسارات تطوير الويب، الأمن السيبراني، الذكاء الاصطناعي، وعلوم البيانات."
+                data-en="Follow tracks for Web Development, Cyber Security, Artificial Intelligence, and Data Science.">تابع مسارات تطوير الويب، الأمن السيبراني، الذكاء الاصطناعي، وعلوم البيانات.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">02</span>
+            <h3 data-ar="متابعة التقدم"  data-en="Progress Tracking">متابعة التقدم</h3>
+            <p  data-ar="شوف الدروس المكتملة، وقت المشاهدة، والخطوة المقترحة التالية."
+                data-en="See completed lessons, watch time, streaks, and the next recommended step.">شوف الدروس المكتملة، وقت المشاهدة، والخطوة المقترحة التالية.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">03</span>
+            <h3 data-ar="فيديوهات مختارة" data-en="Curated Videos">فيديوهات مختارة</h3>
+            <p  data-ar="شاهد دروس يوتيوب داخل واجهة تعلم بسيطة وهادية."
+                data-en="Watch embedded YouTube lessons inside a distraction-light learning interface.">شاهد دروس يوتيوب داخل واجهة تعلم بسيطة وهادية.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">04</span>
+            <h3 data-ar="تصميم متجاوب"  data-en="Responsive Design">تصميم متجاوب</h3>
+            <p  data-ar="استخدم الموقع بسلاسة على الكمبيوتر والتابلت والموبايل."
+                data-en="Use the website smoothly on desktop, tablet, and mobile screens.">استخدم الموقع بسلاسة على الكمبيوتر والتابلت والموبايل.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         TRACKS
+    ══════════════════════════════════════════ -->
+<section class="section-band" id="tracks">
+  <div class="section-head reveal">
+    <span class="eyebrow" data-ar="مسارات التعلم" data-en="Learning tracks">مسارات التعلم</span>
+    <h2 data-ar="اختار مسار واتبع الطريق." data-en="Choose a track and follow the path.">اختار مسار واتبع الطريق.</h2>
+    <p data-ar="كل مسار فيه قائمة يوتيوب عملية، مدة تقديرية، وموضوعات بتتحرك من الأساسيات للمشاريع."
+       data-en="Each track includes a practical YouTube playlist, estimated duration, and topics that build naturally from fundamentals to projects.">
+      كل مسار فيه قائمة يوتيوب عملية، مدة تقديرية، وموضوعات بتتحرك من الأساسيات للمشاريع.
+    </p>
+  </div>
+  <div class="tracks-cards-grid reveal" id="tracksCardsGrid"></div>
+  <div id="trackModalContainer"></div>
+</section>
+
+    <!-- ══════════════════════════════════════════
+         VIDEOS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="videos">
+      <div class="section-head reveal">
+        <span class="eyebrow" data-ar="فصل الفيديوهات" data-en="Video classroom">فصل الفيديوهات</span>
+        <h2 data-ar="شاهد الدروس المختارة من غير ما تخرج من الموقع." data-en="Watch selected lessons without leaving the website.">شاهد الدروس المختارة من غير ما تخرج من الموقع.</h2>
+        <p  data-ar="استخدم القائمة للتنقل بين الدروس. إطار الفيديو متجاوب وبيشتغل كويس على الموبايل."
+            data-en="Use the playlist to switch lessons. The video frame stays responsive and works cleanly on mobile.">
+          استخدم القائمة للتنقل بين الدروس. إطار الفيديو متجاوب وبيشتغل كويس على الموبايل.
+        </p>
+      </div>
+      <div class="video-shell reveal">
+        <div class="video-frame">
+          <iframe id="videoFrame" src="https://www.youtube.com/embed/pQN-pnXPaVg"
+            title="HTML Full Course - Build a Website"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+        <div class="video-sidebar">
+          <h3 data-ar="دروس يوتيوب المميزة" data-en="Featured YouTube Lessons">دروس يوتيوب المميزة</h3>
+          <div id="videoPlaylist"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         DASHBOARD
+    ══════════════════════════════════════════ -->
+    <section class="dashboard-section section-band" id="dashboard">
+      <canvas class="dashboard-matrix" id="dashboardMatrix" aria-hidden="true"></canvas>
+      <div class="dashboard-inner">
+        <div class="dashboard-grid">
+          <div class="reveal">
+            <span class="eyebrow" data-ar="معاينة الداشبورد" data-en="Dashboard preview">معاينة الداشبورد</span>
+            <h2 data-ar="تقدم واضح من غير زحمة." data-en="Progress that feels clear, not noisy.">تقدم واضح من غير زحمة.</h2>
+            <p  data-ar="الداشبورد بيجمع المسار النشط، المسارات المحفوظة، سجل المشاهدة، والدرس التالي في مساحة واحدة مركزة."
+                data-en="The dashboard combines your active track, saved tracks, watch history, and next lesson in a single focused workspace.">
+              الداشبورد بيجمع المسار النشط، المسارات المحفوظة، سجل المشاهدة، والدرس التالي في مساحة واحدة مركزة.
+            </p>
+            <a class="btn-hero-primary" href="#tracks" style="display:inline-flex; text-decoration:none; margin-top:20px;"
+               data-ar="كمل التعلم" data-en="Continue Learning">كمل التعلم</a>
+          </div>
+          <div class="dashboard-card reveal">
+            <div class="dash-top">
+              <div>
+                <span data-ar="التقدم العام" data-en="Overall progress">التقدم العام</span>
+                <strong id="overallProgress">0%</strong>
+              </div>
+              <div class="avatar-badge">AH</div>
+            </div>
+            <div class="stats-grid">
+              <article>
+                <span data-ar="فيديوهات متشاهدة" data-en="Videos watched">فيديوهات متشاهدة</span>
+                <strong id="videosWatched">0</strong>
+              </article>
+              <article>
+                <span data-ar="ساعات مشاهدة" data-en="Hours watched">ساعات مشاهدة</span>
+                <strong id="hoursWatched">0</strong>
+              </article>
+              <article>
+                <span data-ar="أيام متتالية" data-en="Current streak">أيام متتالية</span>
+                <strong id="currentStreak">0</strong>
+              </article>
+              <article>
+                <span data-ar="مسارات محفوظة" data-en="Saved tracks">مسارات محفوظة</span>
+                <strong id="savedTracks">0</strong>
+              </article>
+            </div>
+            <div class="history-list" id="dashboardHistory">
+              <div class="history-item">
+                <b data-ar="لسه مفيش دروس متشاهدة" data-en="No lessons watched yet">لسه مفيش دروس متشاهدة</b>
+                <span data-ar="ابدأ من أي مسار" data-en="Start from any track">ابدأ من أي مسار</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         TEAM
+    ══════════════════════════════════════════ -->
+    <section class="section" id="team">
+      <div class="section-head reveal">
+        <span class="eyebrow" data-ar="فريقنا" data-en="Our Team">فريقنا</span>
+        <h2 data-ar="تعرف على الناس وراء Trackify." data-en="Meet the people behind Trackify.">تعرف على الناس وراء Trackify.</h2>
+        <p  data-ar="كل عضو كان له دور واضح في بناء المنصة، من الصفحات والمحتوى لحد التفاعل والداشبورد."
+            data-en="Every member had a clear role in shaping the platform, from interface design and content planning to interactivity, testing, and presentation.">
+          كل عضو كان له دور واضح في بناء المنصة، من الصفحات والمحتوى لحد التفاعل والداشبورد.
+        </p>
+      </div>
+      <div class="team-grid reveal">
+        <article class="team-card">
+          <img src="assets/yousefeid.png"        alt="Yousefeid"        class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="قائد الفريق"                data-en="Team Leader">قائد الفريق</span>
+            <h3>Yousefeid</h3>
+            <p data-ar="قائد الفريق ومسؤول عن تنفيذ صفحة الفريق وصفحة التواصل." data-en="Team leader who built the team page and the contact page.">قائد الفريق ومسؤول عن تنفيذ صفحة الفريق وصفحة التواصل.</p>
+            <ul>
+              <li data-ar="تنفيذ صفحة الفريق"       data-en="Team page implementation">تنفيذ صفحة الفريق</li>
+              <li data-ar="تنفيذ صفحة التواصل"      data-en="Contact page implementation">تنفيذ صفحة التواصل</li>
+              <li data-ar="تنسيق شغل الفريق"        data-en="Team coordination">تنسيق شغل الفريق</li>
+            </ul>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/ahmedramadn.jpeg"     alt="ahmedramadn"     class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="صفحة تسجيل الدخول"         data-en="Login Page">صفحة تسجيل الدخول</span>
+            <h3>ahmedramadn</h3>
+            <p data-ar="صمم ونفذ صفحة تسجيل الدخول وتجربة الوصول للحساب." data-en="Designed and implemented the login page and account access experience.">صمم ونفذ صفحة تسجيل الدخول وتجربة الوصول للحساب.</p>
+            <ul>
+              <li data-ar="بناء فورم تسجيل الدخول" data-en="Login form structure">بناء فورم تسجيل الدخول</li>
+              <li data-ar="واجهة شاشة الدخول"       data-en="Authentication screen UI">واجهة شاشة الدخول</li>
+              <li data-ar="تجربة تسجيل دخول محلية" data-en="Local demo login flow">تجربة تسجيل دخول محلية</li>
+            </ul>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/mahmoudabdellah.jpeg" alt="mahmoudabdellah" class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="صفحة About"                 data-en="About Page">صفحة About</span>
+            <h3>mahmoudabdellah</h3>
+            <p data-ar="نفذ صفحة About وجهز لينكات الفيديوهات وكل الداتا الخاصة بالمسارات." data-en="Built the about page and prepared the video links plus all track-related data.">نفذ صفحة About وجهز لينكات الفيديوهات وكل الداتا الخاصة بالمسارات.</p>
+            <ul>
+              <li data-ar="محتوى صفحة About"         data-en="About page content">محتوى صفحة About</li>
+              <li data-ar="تجهيز لينكات الفيديوهات" data-en="Video links preparation">تجهيز لينكات الفيديوهات</li>
+              <li data-ar="تجهيز بيانات المسارات"   data-en="Track data preparation">تجهيز بيانات المسارات</li>
+            </ul>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/mohamedahmed.jpeg"    alt="mohamedahmed"    class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="صفحة الفيديوهات"            data-en="Videos Page">صفحة الفيديوهات</span>
+            <h3>mohamedahmed</h3>
+            <p data-ar="نفذ صفحة الفيديوهات وتجربة مشاهدة الدروس." data-en="Implemented the videos page and the lesson watching experience.">نفذ صفحة الفيديوهات وتجربة مشاهدة الدروس.</p>
+            <ul>
+              <li data-ar="تصميم صفحة الفيديوهات"  data-en="Video page layout">تصميم صفحة الفيديوهات</li>
+              <li data-ar="مشغل الدروس المدمج"      data-en="Embedded lesson player">مشغل الدروس المدمج</li>
+              <li data-ar="تفاعل قائمة الفيديوهات" data-en="Playlist interaction">تفاعل قائمة الفيديوهات</li>
+            </ul>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/mohamedkazem.jpeg"    alt="mohamedkazem"    class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="صفحة المسارات"              data-en="Tracks Page">صفحة المسارات</span>
+            <h3>mohamedkazem</h3>
+            <p data-ar="أنشأ صفحة المسارات ونظم واجهة مسارات التعلم." data-en="Created the tracks page and organized the learning paths interface.">أنشأ صفحة المسارات ونظم واجهة مسارات التعلم.</p>
+            <ul>
+              <li data-ar="تبويبات وأقسام المسارات"  data-en="Track tabs and sections">تبويبات وأقسام المسارات</li>
+              <li data-ar="عرض مسار التعلم"          data-en="Learning path presentation">عرض مسار التعلم</li>
+              <li data-ar="كروت وتفاصيل المسارات"   data-en="Track cards and details">كروت وتفاصيل المسارات</li>
+            </ul>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="assets/alimohamed.jpeg"      alt="alimohamed"      class="team-photo">
+          <div class="team-content">
+            <span class="team-role" data-ar="الداشبورد"                  data-en="Dashboard">الداشبورد</span>
+            <h3>alimohamed</h3>
+            <p data-ar="نفذ قسم الداشبورد وتجربة ملخص التقدم." data-en="Built the dashboard section and the progress summary experience.">نفذ قسم الداشبورد وتجربة ملخص التقدم.</p>
+            <ul>
+              <li data-ar="تخطيط الداشبورد"        data-en="Dashboard layout">تخطيط الداشبورد</li>
+              <li data-ar="إحصائيات التقدم"        data-en="Progress statistics">إحصائيات التقدم</li>
+              <li data-ar="معاينة سجل التعلم"      data-en="Learning history preview">معاينة سجل التعلم</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         CONTACT
+    ══════════════════════════════════════════ -->
+    <section class="section-band" id="contact">
+      <div class="contact-grid">
+        <div class="reveal">
+          <span class="eyebrow" data-ar="تواصل" data-en="Contact">تواصل</span>
+          <h2 data-ar="ابعت رسالة لفريق Trackify." data-en="Send a message to the Trackify team.">ابعت رسالة لفريق Trackify.</h2>
+          <p  data-ar="املأ الفورم ورسالتك هتوصل مباشرة لفريق Trackify."
+              data-en="Fill out the form and your message will be sent directly to the Trackify team.">
+            املأ الفورم ورسالتك هتوصل مباشرة لفريق Trackify.
+          </p>
+        </div>
+        <form class="contact-form reveal" id="contactForm">
+          <div class="form-row">
+            <div class="field-group">
+              <label for="contactName" data-ar="الاسم بالكامل" data-en="Full Name">الاسم بالكامل</label>
+              <input id="contactName" name="name" type="text" placeholder="اسمك" required>
+            </div>
+            <div class="field-group">
+              <label for="contactEmail" data-ar="البريد الإلكتروني" data-en="Email">البريد الإلكتروني</label>
+              <input id="contactEmail" name="email" type="email" placeholder="you@example.com" required>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="contactSubject" data-ar="الموضوع" data-en="Subject">الموضوع</label>
+            <input id="contactSubject" name="subject" type="text" placeholder="إزاي نقدر نساعدك؟" required>
+          </div>
+          <div class="field-group">
+            <label for="contactMessage" data-ar="الرسالة" data-en="Message">الرسالة</label>
+            <textarea id="contactMessage" name="message" rows="5" placeholder="اكتب رسالتك هنا..." required></textarea>
+          </div>
+          <button class="btn-contact-submit" type="submit" id="contactButton" data-ar="إرسال إلى تليجرام" data-en="Send to Telegram">إرسال إلى تليجرام</button>
+          <p class="form-msg" id="contactMessageStatus" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════ -->
+  <footer class="footer-strip">
+    <div class="footer-item">
+      <div class="icon">🎬</div>
+      <p data-ar="فيديوهات يوتيوب مختارة" data-en="Curated YouTube Videos">فيديوهات يوتيوب مختارة</p>
+    </div>
+    <div class="footer-item">
+      <div class="icon">📈</div>
+      <p data-ar="تابع مستوى تقدمك" data-en="Track Your Progress">تابع مستوى تقدمك</p>
+    </div>
+    <div class="footer-item">
+      <div class="icon">🆓</div>
+      <p data-ar="100% مجاني" data-en="100% Free">%100 مجاني</p>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="Animation.js" defer></script>
+  <script src="shared.js"    defer></script>
+</body>
+</html>
